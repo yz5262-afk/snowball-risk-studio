@@ -1,0 +1,16 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.ipynb_checkpoints/
+.streamlit/secrets.toml
+*.pem
+*.key
+.pytest_cache/
+midi_dataset/
+*.pt
+*.pth

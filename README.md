@@ -1,71 +1,60 @@
 # Snowball Risk Studio
 
-A polished Streamlit dashboard for the European Snowball model in the supplied `Snowball_Pricing(2).ipynb`.
+**From path simulation to an explorable structured-product risk surface.**
 
-## What it does
+A Python valuation engine and Streamlit workstation for a step-down autocallable
+with European knock-in. It connects Monte Carlo pricing, coupon calibration and
+finite-difference risk measures in one interactive application.
 
-- Day-0 Monte Carlo PV / NPV
-- Target coupon that makes PV equal a selected issue price
-- Delta / Gamma / Price curves across underlying levels and valuation times
-- Delta heatmap across spot and time
-- Observation-date Delta before/after and Delta jump analysis
-- KO barrier schedule and first-KO probabilities
-- Maturity-safe / maturity-loss outcome probabilities
-- Target coupon sensitivity to dividend yield and volatility
-- Random-seed stability check
-- CSV downloads and portable ZIP analysis package
-- External-facing styling and model-scope notes
+![Model analytics](figures/model-analytics.svg)
 
-## Model basis
+## Capabilities
 
-The core model follows the supplied notebook's Cell 3 / Cell 4 logic:
+- Vectorized, chunked simulation under risk-neutral geometric Brownian motion.
+- Present value and target coupon for a selected issue price.
+- Delta, Gamma and price curves using common random numbers.
+- Spot/time heatmaps and observation-date Delta jumps.
+- Knock-out timing, terminal loss probabilities and random-seed stability.
+- Downloadable CSV tables and a portable analysis ZIP.
 
-- Risk-neutral GBM with drift `r - q`
-- Monthly KO observations after the lock-in period
-- Linear KO step-down
-- European KI checked only at maturity
-- Deterministic `r`, `q`, and `vol`
-- Common-random-number central finite-difference Greeks
-
-The numerical engine preserves the notebook's legacy `RandomState` random-number sequence convention for reproducibility.
-
-## Project structure
-
-```text
-snowball_visual_tool/
-├── app.py
-├── snowball_engine.py
-├── requirements.txt
-├── README.md
-├── .gitignore
-└── .streamlit/
-    └── config.toml
+```mermaid
+flowchart LR
+  A[Contract and market parameters] --> B[Seeded path simulation]
+  B --> C[Barrier and payoff evaluation]
+  C --> D[PV / coupon / Greeks]
+  D --> E[Streamlit dashboard and exports]
 ```
 
-## Run locally
+## Run
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate          # macOS / Linux
-# .venv\\Scripts\\activate         # Windows PowerShell
-
+source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Deploy for sharing
+For the engine without the UI:
 
-The project is designed to be pushed to GitHub and deployed as a Streamlit app. Use `app.py` as the entrypoint and `requirements.txt` for dependencies.
+```python
+from snowball_engine import SnowballParams, generate_normals, price_snowball
+params = SnowballParams(n_sims=5000)
+params.validate()
+normals = generate_normals(params, seed=42)
+pv = price_snowball(params.S0, 0.0, normals, params)
+print(pv)
+```
 
-After deployment, the app runs in the browser. Other people only need the app URL; they do not need Python, your notebook, or your local Terminal environment.
+## Model boundaries
 
-## Performance guidance
+Monthly knock-out observations follow a lock-in period and a linear step-down
+barrier. Knock-in is checked **only at maturity**. Rates, dividends and volatility
+are deterministic. This is not a daily knock-in model. Results depend on the
+simulation size and bump convention; no live-trading or external validation is
+claimed. The figure uses synthetic contract and market inputs.
 
-- Exploration: 5,000–10,000 paths
-- Final analysis: 30,000+ paths
-- Delta heatmap is optional because it is more expensive than a single curve
-- Keep the curve grid moderate when running on hosted infrastructure
+## Layout
 
-## Disclaimer
-
-This dashboard is for research, education and model demonstration. It is not formal investment, trading, risk-management or valuation advice.
+`snowball_engine.py` contains numerical analytics; `app.py` contains the dashboard.
+`examples/model_analytics.py` reproduces the figure. See [VALIDATION.md](VALIDATION.md)
+and [PROVENANCE.md](PROVENANCE.md) for verification and source context.
